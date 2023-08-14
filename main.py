@@ -10,18 +10,18 @@ values_list = []
 def home():
     return "Hello! This is the Flask app."
 
-@app.route('/data', methods=['POST'])
+@app.route('/data', methods=['GET'])
 def append_values():
-    data = request.json
-
-    id = data.get('id')
-    temp = data.get('temp')
-    humi = data.get('humi')
+    id = request.args.get('id')
+    temp = request.args.get('temp')
+    humi = request.args.get('humi')
+    lat = request.args.get('lat')  # Include latitude
+    lon = request.args.get('lon')  # Include longitude
 
     if temp is not None and humi is not None and id is not None:
         now = datetime.now()
         timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
-        values_list.append((timestamp, id, temp, humi))
+        values_list.append((timestamp, id, temp, humi, lat, lon))  # Include lat and lon
         
         hours, minutes, seconds = now.hour, now.minute, now.second
         return f"Values appended successfully! at {hours}h {minutes}m {seconds}s"
@@ -30,7 +30,26 @@ def append_values():
 
 @app.route('/show')
 def show_values():
-    return "<br>".join([f"<b>Timestamp</b>: {timestamp}, <b>Device ID</b>: {id}, <b>Temp</b>: {temp}, <b>Humidity</b>: {humi}" for timestamp, id, temp, humi in values_list])
+    table_rows = [
+        f"<tr><td>{timestamp}</td><td>{id}</td><td>{temp}</td><td>{humi}</td><td>{lat}</td><td>{lon}</td></tr>"
+        for timestamp, id, temp, humi, lat, lon in values_list  # Include lat and lon
+    ]
+    table_html = f"""
+        <table border="1">
+            <tr>
+                <th>Timestamp</th>
+                <th>Device ID</th>
+                <th>Temp</th>
+                <th>Humidity</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+            </tr>
+            {''.join(table_rows)}
+        </table>
+    """
+
+    return table_html
+
 
 @app.route('/delete')
 def delete_values():
@@ -39,4 +58,4 @@ def delete_values():
     return "All values deleted successfully!"
 
 if __name__ == '__main__':
-    app.run(debug=True,port=80)
+    app.run(host='192.168.1.3', port="5000")
